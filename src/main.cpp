@@ -35,8 +35,11 @@
 #include <DallasTemperature.h>
 #include <Adafruit_NeoPixel.h>
 #include <JC_Button.h>
+#include "Relay.h"
 
 #define DS18B20PIN 16
+#define RELAYUNOPIN 21
+Relay relayuno(2, RELAYUNOPIN); // constructor receives (pin, isNormallyOpen) true = Normally Open, false = Normally Closed
 
 // para el oled como usarlo https://github.com/ThingPulse/esp8266-oled-ssd1306
 
@@ -143,7 +146,9 @@ void setup()
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   sensor.begin();
   strip.begin();
-  strip.show(); // Initialize all pixels to 'off'
+  strip.show();     // Initialize all pixels to 'off'
+  select_pic(0);    // para mostrar el logo
+  relayuno.begin(); // inicializes the pin
 }
 
 void loop()
@@ -173,6 +178,14 @@ void loop()
     ledState = !ledState;
     display.drawString(0, 0, "boton " + String(ledState) + " <---");
     click_menu();
+    if (ledState)
+    {
+      relayuno.turnon();
+    }
+    else
+    {
+      relayuno.turnoff();
+    }
   }
   if (ledState)
   {
@@ -277,7 +290,7 @@ void back_to_principal_menu()
 {
   // vuelvo amenu principal si para determinado tiempo
   // JUMP TO DEFAULT IF NO CLICK IS DETECTED
-  if (millis() >= (lastmillis + maxtime))
+  if (millis() >= (lastmillis_pic + maxtime_pic))
   {
     select_pic(1);
   }
@@ -285,7 +298,7 @@ void back_to_principal_menu()
 void click_menu()
 {
   // se hizo click en el boto de menues
-  lastmillis = millis();
+  lastmillis_pic = millis();
   if (pic >= 0 && pic < 10)
   {
     if (pic >= maxPics_L1)
