@@ -38,6 +38,8 @@
 
 #define DS18B20PIN 16
 
+// para el oled como usarlo https://github.com/ThingPulse/esp8266-oled-ssd1306
+
 // NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
 
 // defines variables
@@ -122,6 +124,12 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(led_neopixel_count, pin_neopixel, NE
 //************************
 void TodoUnColor(int xr, int xg, int xb);
 
+// manejo del menu solo pasa por las patallas no hay enter solo ve
+
+void select_pic(int xpic);
+void back_to_principal_menu();
+void click_menu();
+
 void setup()
 {
   display.init();
@@ -148,18 +156,10 @@ void loop()
   sensor.requestTemperatures();
   temperatureC = sensor.getTempCByIndex(0);
 
-  display.clear();
-  display.setTextAlignment(TEXT_ALIGN_LEFT);
-  display.drawString(0, 0, "Hello world: " + String(millis()));
-  display.drawString(0, 10, "PIN neo: " + String(pin_neopixel) + "PIN boton: " + String(BUTTON_PIN));
-  display.setTextAlignment(TEXT_ALIGN_CENTER);
-  display.drawString(64, 22, "--> C " + String(temperatureC) + " <---");
-  display.setTextAlignment(TEXT_ALIGN_CENTER);
-  display.drawString(64, 30, "pin " + String(DS18B20PIN) + " <---");
+  back_to_principal_menu();
+
   //  display.setTextAlignment(TEXT_ALIGN_CENTER);
   // display.drawString(64, 22, "Center aligned (64,22)");
-
-  display.display();
 
   Serial.print("Ping: ");
   // Serial.print(sonar.ping_cm()); // Send ping, get distance in cm and print result (0 = outside set distance range)
@@ -171,7 +171,8 @@ void loop()
   if (myBtn.wasReleased()) // if the button was released, change the LED state
   {
     ledState = !ledState;
-    display.drawString(64, 30, "boton " + String(ledState) + " <---");
+    display.drawString(0, 0, "boton " + String(ledState) + " <---");
+    click_menu();
   }
   if (ledState)
   {
@@ -199,5 +200,103 @@ void TodoUnColor(int xr, int xg, int xb)
     strip.setPixelColor(i, strip.Color(xr, xg, xb));
 
     strip.show();
+  }
+}
+
+void select_pic(int xpic)
+{
+
+  if (xpic == 0)
+  {
+    display.clear(); // limpio la pantalla
+    display.setTextAlignment(TEXT_ALIGN_LEFT);
+    display.drawString(0, 10, "Imagen o algo lindo ");
+    display.drawString(0, 20, "Vuelve a esta pantalla los 30 segundos ");
+    display.display(); // muestro la pantalla
+  }
+
+  if (xpic == 1)
+  {
+    display.clear(); // limpio la pantalla
+    display.setTextAlignment(TEXT_ALIGN_LEFT);
+    display.drawString(0, 0, "Muestra los pines Utilizados: " + String(millis()));
+    display.drawString(0, 10, "PIN neo: " + String(pin_neopixel) + "PIN boton: " + String(BUTTON_PIN));
+    display.setTextAlignment(TEXT_ALIGN_CENTER);
+    display.drawString(64, 22, "--> C " + String(temperatureC) + " <---");
+    display.setTextAlignment(TEXT_ALIGN_CENTER);
+    display.drawString(64, 30, "pin " + String(DS18B20PIN) + " <---");
+    display.display(); // muestro la pantalla
+  }
+
+  if (xpic == 2)
+  {
+    display.clear(); // limpio la pantalla
+    display.setTextAlignment(TEXT_ALIGN_LEFT);
+    display.drawString(0, 10, "PARAMETERS ");
+    display.drawString(0, 20, ">DATA RECORD");
+    display.drawString(0, 30, " DISPLAY ");
+    display.drawString(0, 40, " HELP ");
+    display.drawString(0, 50, " PROJECT INFO");
+    display.display(); // muestro la pantalla
+  }
+
+  if (xpic == 3)
+  {
+    display.clear(); // limpio la pantalla
+    display.drawString(0, 10, " PARAMETERS ");
+    display.drawString(0, 20, " DATA RECORD");
+    display.drawString(0, 30, ">DISPLAY ");
+    display.drawString(0, 40, " HELP ");
+    display.drawString(0, 50, " PROJECT INFO");
+    display.display(); // muestro la pantalla
+  }
+  if (xpic == 4)
+  {
+    display.clear(); // limpio la pantalla
+    display.drawString(0, 10, " PARAMETERS ");
+    display.drawString(0, 20, " DATA RECORD");
+    display.drawString(0, 30, " DISPLAY ");
+    display.drawString(0, 40, ">HELP ");
+    display.drawString(0, 50, " PROJECT INFO");
+    display.display(); // muestro la pantalla
+  }
+
+  if (xpic == 5)
+  {
+    display.clear(); // limpio la pantalla
+    display.drawString(0, 10, " PARAMETERS ");
+    display.drawString(0, 20, " DATA RECORD");
+    display.drawString(0, 30, " DISPLAY ");
+    display.drawString(0, 40, " HELP ");
+    display.drawString(0, 50, ">PROJECT INFO");
+    display.display(); // muestro la pantalla
+  }
+}
+
+void back_to_principal_menu()
+{
+  // vuelvo amenu principal si para determinado tiempo
+  // JUMP TO DEFAULT IF NO CLICK IS DETECTED
+  if (millis() >= (lastmillis + maxtime))
+  {
+    select_pic(1);
+  }
+}
+void click_menu()
+{
+  // se hizo click en el boto de menues
+  lastmillis = millis();
+  if (pic >= 0 && pic < 10)
+  {
+    if (pic >= maxPics_L1)
+    {
+      pic = 1;
+      select_pic(pic);
+    }
+    else if (pic < maxPics_L1)
+    {
+      pic++;
+      select_pic(pic);
+    }
   }
 }
