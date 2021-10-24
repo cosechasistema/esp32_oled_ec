@@ -36,7 +36,16 @@
 #include <Adafruit_NeoPixel.h>
 #include <JC_Button.h>
 #include "Relay.h"
+#include "DHT.h"
+#include <Adafruit_Sensor.h>
 
+#define DHTPIN 18 // Digital pin connected to the DHT sensor
+#define DHTTYPE DHT22
+DHT dht(DHTPIN, DHTTYPE);
+int localHum = 0;
+int localTemp = 0;
+
+// 18 para
 #define DS18B20PIN 16
 #define RELAYUNOPIN 21
 Relay relayuno(2, RELAYUNOPIN); // constructor receives (pin, isNormallyOpen) true = Normally Open, false = Normally Closed
@@ -132,6 +141,8 @@ void TodoUnColor(int xr, int xg, int xb);
 void select_pic(int xpic);
 void back_to_principal_menu();
 void click_menu();
+void getDHT();
+void drawDHT();
 
 void setup()
 {
@@ -180,11 +191,11 @@ void loop()
     click_menu();
     if (ledState)
     {
-      relayuno.turnon();
+      relayuno.turnOff();
     }
     else
     {
-      relayuno.turnoff();
+      relayuno.turnOn();
     }
   }
   if (ledState)
@@ -235,9 +246,11 @@ void select_pic(int xpic)
     display.drawString(0, 0, "Muestra los pines Utilizados: " + String(millis()));
     display.drawString(0, 10, "PIN neo: " + String(pin_neopixel) + "PIN boton: " + String(BUTTON_PIN));
     display.setTextAlignment(TEXT_ALIGN_CENTER);
-    display.drawString(64, 22, "--> C " + String(temperatureC) + " <---");
+    display.drawString(0, 22, "--> C " + String(temperatureC) + " <---");
     display.setTextAlignment(TEXT_ALIGN_CENTER);
-    display.drawString(64, 30, "pin " + String(DS18B20PIN) + " <---");
+    display.drawString(0, 30, "pin temp " + String(DS18B20PIN) + " <---");
+    display.drawString(0, 40, "pin relay" + String(RELAYUNOPIN) + " <---");
+    display.drawString(0, 50, "pin dht" + String(DHTPIN) + " <---");
     display.display(); // muestro la pantalla
   }
 
@@ -277,11 +290,8 @@ void select_pic(int xpic)
   if (xpic == 5)
   {
     display.clear(); // limpio la pantalla
-    display.drawString(0, 10, " PARAMETERS ");
-    display.drawString(0, 20, " DATA RECORD");
-    display.drawString(0, 30, " DISPLAY ");
-    display.drawString(0, 40, " HELP ");
-    display.drawString(0, 50, ">PROJECT INFO");
+    drawDHT();
+
     display.display(); // muestro la pantalla
   }
 }
@@ -312,4 +322,55 @@ void click_menu()
       select_pic(pic);
     }
   }
+}
+
+/***************************************************
+ * Get indoor Temp/Hum data
+ ****************************************************/
+void getDHT()
+{
+  float tempIni = localTemp;
+  float humIni = localHum;
+  localTemp = dht.readTemperature();
+  localHum = dht.readHumidity();
+  if (isnan(localHum) || isnan(localTemp)) // Check if any reads failed and exit early (to try again).
+  {
+    Serial.println("Failed to read from DHT sensor!");
+    display.drawString(0, 60, "Fallo sensor dht" + String(DHTPIN) + " <---");
+    display.display(); // muestro la pantalla
+    localTemp = tempIni;
+    localHum = humIni;
+    return;
+  }
+}
+
+/***************************************************
+ * Draw Indoor Page
+ ****************************************************/
+void drawDHT()
+{
+  display.flipScreenVertically();
+  int x = 0;
+  int y = 0;
+  display.setFont(ArialMT_Plain_10);
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  display.drawString(0 + x, 5 + y, "Hum");
+
+  display.setFont(ArialMT_Plain_10);
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  display.drawString(43 + x, y, "INDOOR");
+
+  display.setFont(ArialMT_Plain_24);
+  String hum = String(localHum) + "%";
+  display.drawString(0 + x, 15 + y, hum);
+  int humWidth = display.getStringWidth(hum);
+
+  display.setFont(ArialMT_Plain_10);
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  display.drawString(95 + x, 5 + y, "Temp");
+
+  display.setFont(ArialMT_Plain_24);
+  String temp = String(localTemp) + "°C";
+  display.drawString(70 + x, 15 + y, temp);
+  int tempWidth = display.getStringWidth(temp);
 }
